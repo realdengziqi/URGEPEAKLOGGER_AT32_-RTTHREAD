@@ -1,0 +1,119 @@
+# GPIO Mapping
+
+本文档记录当前已经在 AT32F403ARGT7 目标板上验证过的 GPIO 映射，以及从网表读取但尚未验证的相关引脚。
+
+验证日期：2026-06-15
+
+## 已硬件验证
+
+| 功能 | MCU 引脚 | 主控板网络名 | 外部网络/器件 | 方向 | 有效电平/配置 | 验证方式 | 结论 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Debug UART TX | PA9 | MCU_PA9_USART1_TX_DEBUG | COM12 / JLink CDC UART | 输出 | USART1, 115200 8N1 | COM12 接收 RT-Thread heartbeat 与 CLI 输出 | 通过 |
+| Debug UART RX | PA10 | MCU_PA10_USART1_RX_DEBUG | COM12 / JLink CDC UART | 输入 | USART1, 115200 8N1, RX interrupt ring buffer | COM12 发送 `help`, `ping`, `tick`, `key watch` | 通过 |
+| LED_DATA | PA2 | MCU_GPIO_PA2_LED_DATA | 交互板 LED_DATA | 输出 | 低电平点亮，高电平熄灭 | `led data on/off/toggle` | 通过 |
+| LED_TEST | PC4 | MCU_GPIO_PC4_LED_DI | 交互板 LED_TEST | 输出 | 低电平点亮，高电平熄灭 | `led test on/off/toggle` | 通过 |
+| KEY_DOWN | PC2 | MCU_GPIO_PC2_KEY_DOWN | 交互板 KEY_DOWN | 输入 | 内部上拉，按下为低电平 | `key watch` 输出 `raw=0x01 down=1` | 通过 |
+| KEY_LEFT | PC3 | MCU_GPIO_PC3_KEY_LEFT | 交互板 KEY_LEFT | 输入 | 内部上拉，按下为低电平 | `key watch` 输出 `raw=0x02 left=1` | 通过 |
+| KEY_RIGHT | PA0 | MCU_GPIO_PA0_KEY_RIGHT | 交互板 KEY_RIGHT | 输入 | 内部上拉，按下为低电平 | `key watch` 输出 `raw=0x04 right=1` | 通过 |
+| KEY_UP | PA1 | MCU_GPIO_PA1_KEY_UP | 交互板 KEY_UP | 输入 | 内部上拉，按下为低电平 | `key watch` 输出 `raw=0x08 up=1` | 通过 |
+| KEY_MID | PB0 | MCU_GPIO_PB0_KEY_MID | 交互板 KEY_MID | 输入 | 内部上拉，按下为低电平 | `key watch` 输出 `raw=0x10 mid=1` | 通过 |
+| Screen RES | PC5 | MCU_GPIO_PC5_SCREEN_RES | 屏幕复位 | 输出 | GPIO 推挽输出 | `lcd init` 后屏幕可显示纯色 | 通过 |
+| Screen BLK | PB1 | MCU_GPIO_PB1_SCREEN_BLK | 屏幕背光 | 输出 | 高电平点亮 | `lcd backlight on/off` 控制背光 | 通过 |
+| Screen DC | PB2 | MCU_GPIO_PB2_SCREEN_DC | 屏幕数据/命令选择 | 输出 | GPIO 推挽输出 | `lcd init` 后屏幕可显示纯色 | 通过 |
+| Screen SPI2 SCK | PB13 | MCU_SPI2_MOSI_PB13_SCREEN | 飞线修正后屏幕时钟线 | 输出 | SPI2 SCK, mode 3, div 8 | `lcd init` 与多色刷屏正常，速度明显快于 GPIO 模拟 SPI | 通过 |
+| Screen SPI2 MOSI | PB15 | MCU_SPI2_SCK_PB15_SCREEN | 飞线修正后屏幕数据线 | 输出 | SPI2 MOSI, mode 3, div 8 | `lcd init` 与多色刷屏正常，速度明显快于 GPIO 模拟 SPI | 通过 |
+| HDC1080 I2C1 SCL | PB6 | MCU_PB6_I2C1_SCL_SCREEN | 交互板 I2C1_SCL / TI HDC1080DMBR | 输出 | I2C1 100 kHz，地址 0x40 | `hdc1080 id`、`hdc1080 read`、`data watch 3 1000` | 通过 |
+| HDC1080 I2C1 SDA | PB7 | MCU_PB7_I2C1_SDA_SCREEN | 交互板 I2C1_SDA / TI HDC1080DMBR | 双向 | I2C1 100 kHz，地址 0x40 | `hdc1080 id`、`hdc1080 read`、`data watch 3 1000` | 通过 |
+| EEPROM I2C2 SCL | PB10 | MCU_PB10_I2C2_SCL | AT24C128C U14 SCL | 输出 | I2C2 100 kHz，地址 0x50 | `eeprom init`、`eeprom test`、`eeprom writehex/read` | 通过 |
+| EEPROM I2C2 SDA | PB11 | MCU_PB11_I2C2_SDA | AT24C128C U14 SDA | 双向 | I2C2 100 kHz，地址 0x50 | `eeprom init`、`eeprom test`、`eeprom writehex/read` | 通过 |
+
+## 当前调试命令
+
+这些命令由 `firmware/app/src/app_main.c` 提供，通过 COM12 输入：
+
+```text
+help
+ping
+tick
+key
+key watch
+key watch on
+key watch off
+led data on
+led data off
+led data toggle
+led test on
+led test off
+led test toggle
+lcd init
+lcd red
+lcd green
+lcd blue
+lcd black
+lcd white
+lcd demo
+lcd ui
+lcd backlight on
+lcd backlight off
+lcd bus status
+hdc1080 init
+hdc1080 id
+hdc1080 read
+eeprom init
+eeprom info
+eeprom read 0x3FC0 16
+eeprom writehex 0x3FE0 1122334455aabbcc
+eeprom test
+```
+
+`key watch` 每 50 ms 读取一次按键，只在状态变化时输出。该功能用于硬件 bring-up，不是正式按键业务线程。
+
+`lcd` 命令用于屏幕最小 bring-up：当前使用硬件 SPI2 轮询发送，不使用 DMA，不接 uGUI。整屏填色、`lcd demo` 和 `lcd ui` 均是阻塞式调试动作，用于确认屏幕链路、坐标方向、基础绘图、字符显示和 UI 页面骨架。
+
+当前 LED、按键、LCD 和 HDC1080 调试命令由 `firmware/app/src/app_bringup.c` 包装，属于硬件 bring-up 调试入口，不是正式业务线程。`lcd ui` 显示的数据来自 `firmware/app/src/app_data_service.c` 的统一快照；UI 不直接访问传感器驱动。
+
+当前 UI 按键事件由 `firmware/app/src/app_key_input.c` 扫描和消抖后上报给 `firmware/app/src/app_ui.c`。`UP/DOWN/LEFT/RIGHT` 用于切换 UI 页面，`MID` 用于刷新当前页面；该路径属于前端交互层，不直接操作采样、存储或通信业务。
+
+当前后台数据服务由 `firmware/app/src/app_data_service.c` 提供，线程名 `data_svc`，优先级 18，栈 768 bytes，周期 200 ms。该线程维护统一快照，每 1000 ms 读取一次 HDC1080，并保存原始换算值、单点校准值和滤波值；UI 和调试命令通过 `data_service_get_snapshot()` 读取快照。
+
+## RTC
+
+| 功能 | MCU 引脚 | 外设 | 方向 | 状态 |
+| --- | --- | --- | --- | --- |
+| DS1302_RST/CE | PA12 | DS1302 U12 pin 5 | MCU 输出 | 已验证 |
+| DS1302_IO | PC12 | DS1302 U12 pin 6 | 双向 GPIO | 已验证 |
+| DS1302_SCLK | PD2 | DS1302 U12 pin 7 | MCU 输出 | 已验证 |
+
+主控板 RTC 使用外部 `DS1302Z`，32.768 kHz 晶振 `X2` 连接到 DS1302，不作为 AT32 内部 RTC 的 LEXT 输入使用。RTC 访问由 `firmware/app/src/app_rtc.c` 通过 GPIO 三线时序完成，时间快照由 `data_service` 统一提供给 UI 和调试命令。`rtc set 2026-06-15 04:43:16` 后，串口读回时间递增，`data` 快照显示 `time_valid=1`，已验证基础读写和走时。
+
+## 待验证 GPIO
+
+以下来自网表和当前板级设计理解，尚未完成视觉确认。后续接屏幕或外设时，需要按实际硬件验证后再移入“已硬件验证”。
+
+| 功能 | MCU 引脚 | 主控板网络名 | 外部网络/器件 | 状态 |
+| --- | --- | --- | --- | --- |
+| Screen I2C1 SCL | PB6 | MCU_PB6_I2C1_SCL_SCREEN | 交互板 I2C1_SCL / HDC1080 | 已通过 HDC1080 验证 |
+| Screen I2C1 SDA | PB7 | MCU_PB7_I2C1_SDA_SCREEN | 交互板 I2C1_SDA / HDC1080 | 已通过 HDC1080 验证 |
+
+## 资料来源
+
+- `hardware_info/主控板_网表.csv`
+- `hardware_info/交互板_网表.csv`
+- `firmware/bsp/at32f403/src/board.c`
+- `firmware/app/src/app_main.c`
+- `firmware/drivers/screen/src/screen_st7789.c`
+- `firmware/drivers/sensor/src/sensor_hdc1080.c`
+- `firmware/drivers/storage/src/storage_at24c128.c`
+- 2026-06-15 实板串口与 LED/按键测试记录
+- 2026-06-15 实板屏幕测试：GPIO 模拟 SPI 已验证屏幕链路可显示正确颜色；飞线修正后固件已切到硬件 SPI2 `SCK=PB13` / `MOSI=PB15`，多色刷屏正常且速度明显提升
+- 2026-06-15 实板 HDC1080 测试：COM12 读到 manufacturer ID `0x5449`、device ID `0x1050`，`data_service` 快照显示 `sensor_flags=0x01`
+- 2026-06-15 实板 AT24C128C EEPROM 测试：COM12 `eeprom init` 成功，`eeprom test` 写读回 `0x3FC0` 32 bytes 成功，`eeprom writehex/read` 写读回 `0x3FE0` 和 `0x3FF8` 成功
+
+## 注意事项
+
+- USART1 已作为 debug UART 使用，不应复用为 RS485 或业务串口。
+- LED_DATA 与 LED_TEST 当前验证为低电平点亮。
+- 按键当前验证为 active-low，代码侧启用内部上拉。
+- `PC4` 在主控板网表名为 `MCU_GPIO_PC4_LED_DI`，在交互板侧对应 `LED_TEST`，当前已按实际点亮验证。
+- 交互板 FPC3 与主控板 FPC1 按反向线序连接；屏幕相关网名应以主控板 MCU 网络名和实测结果为准。
+- 屏幕 SPI 原始网络名与 MCU SPI2 功能相反；当前硬件已通过飞线修正，固件按硬件 SPI2 使用：`SCK=PB13`，`MOSI=PB15`。

@@ -1,0 +1,88 @@
+# MSH 调试命令
+
+当前固件已经接入 RT-Thread FinSH/MSH 的最小可用集。MSH 只作为开发阶段的模块测试、硬件 bring-up 和 Codex 联调入口，不作为产品用户界面或正式业务路径。
+
+## 原则
+
+- 命令层属于前端调试接口，不直接访问 ADC、Flash、LCD 业务状态。
+- 业务状态通过 `data_service`、后续 `param_service`、`record_service` 等后台服务访问。
+- bring-up 命令可以保留硬件直连，但只用于硬件验证，不作为正式业务接口。
+- `eeprom test` 和 `eeprom writehex` 会实际改写 AT24C128C 内容，只用于 bring-up scratch 区验证；正式参数和记录写入应后续接入 param_service / record_service。
+- UI 暂不作为判断后端是否成功的依据；后端验证优先使用串口 shell 命令。
+- 串口参数：COM12，115200 8N1。
+
+## 当前命令
+
+| 命令 | 用途 | 数据边界 |
+| --- | --- | --- |
+| `help` | 打印核心命令和 bring-up 命令 | shell |
+| `sys` / `sys info` | 打印固件运行基础信息 | RTOS |
+| `sys tick` | 打印 RT-Thread tick | RTOS |
+| `sys threads` | 打印线程、优先级、状态和栈使用估算 | RTOS |
+| `ping` | 验证串口命令链路 | shell |
+| `tick` | 打印 RT-Thread tick | RTOS |
+| `data` / `data show` | 打印 data_service 快照，包含参数状态版本 | data_service |
+| `data watch [count] [period_ms]` | 限次打印 data_service 快照 | data_service |
+| `param` / `param list` | 打印运行期参数表 | param_service |
+| `param get <name>` | 读取单个运行期参数 | param_service |
+| `param set <name> <value>` | 修改单个运行期参数，暂不写入 Flash | param_service |
+| `param defaults` | 恢复运行期默认参数，暂不写入 Flash | param_service |
+| `param status` | 打印参数服务状态 | param_service |
+| `param save` / `param load` | 当前仅提示持久化未接入 | param_service |
+| `param set env_temp_offset_mc <milli_C>` | 设置 HDC1080 温度单点校准 offset，范围 -10000..10000 | param_service -> data_service |
+| `param set env_humi_offset_mpermil <mpermil>` | 设置 HDC1080 湿度单点校准 offset，范围 -20000..20000 | param_service -> data_service |
+| `rtc` / `rtc get` | 读取 DS1302 时间 | data_service -> app_rtc |
+| `rtc set YYYY-MM-DD HH:MM:SS` | 设置 DS1302 时间 | data_service -> app_rtc |
+| `key` / `key watch` / `key watch off` | 按键 bring-up | board GPIO |
+| `led ...` | LED bring-up | board GPIO |
+| `lcd ...` | LCD bring-up | ST7789 driver |
+| `hdc1080 init` / `hdc1080 id` / `hdc1080 read` | HDC1080 bring-up | HDC1080 driver |
+| `eeprom init` / `eeprom info` | AT24C128C EEPROM bring-up | EEPROM driver |
+| `eeprom read <addr> <len>` | 读取 AT24C128C，单次最多 32 bytes | EEPROM driver |
+| `eeprom writehex <addr> <hexstring>` | 写入 AT24C128C，hexstring 最多 32 bytes | EEPROM driver |
+| `eeprom test [addr]` | 写读回 32 bytes 测试，默认地址 `0x3FC0` | EEPROM driver |
+
+## 已验证状态
+
+- `sys info`：已在 COM12 验证，能打印 MCU、RT-Thread tick、tick 频率、优先级范围和 FinSH 配置。
+- `sys tick`：已在 COM12 验证，能打印 RT-Thread tick。
+- `sys threads`：已在 COM12 验证，能打印 `tshell`、`data_svc`、`tidle0`、`timer`、`main` 等线程状态和栈使用估算。
+- `help`：已在 COM12 验证，能列出 MSH 导出的核心命令和 bring-up 命令。
+- `ping`：已在 COM12 验证，能返回当前 tick。
+- `tick`：已在 COM12 验证，能返回 RT-Thread tick。
+- `rtc` / `rtc get`：已在 COM12 验证，能读取 DS1302 时间，时间持续递增。
+- `data` / `data show`：已在 COM12 验证，快照显示 `time_valid=1`，并打印 data_service 中的 RTC 时间、HDC1080 环境温湿度、`sensor_flags`、`param_ver` 和 `param_dirty`。
+- `data watch 3 1000`：已在 COM12 验证，能限次按周期打印快照，HDC1080 有效时 `sensor_flags=0x01`。
+- `data` HDC1080 字段：已在 COM12 验证，`data env raw` 打印原始换算值，`data env cal` 打印单点 offset 后的校准值，`data sensor` 打印校准后滤波值。
+- `bringup`：已在 COM12 验证，能列出 key、led、lcd、hdc1080 bring-up 命令。
+- `key`：已在 COM12 验证，能读取当前按键 raw 状态。
+- `led data toggle`：已在 COM12 验证，能转发到 LED bring-up 命令。
+- `hdc1080 id`：已在 COM12 验证，能读到 manufacturer ID `0x5449`、device ID `0x1050`。
+- `hdc1080 read`：已在 COM12 验证，能读到 HDC1080 温湿度原始值和换算值。
+- `eeprom init`：已在 COM12 验证，AT24C128C I2C2 地址 `0x50` 初始化成功。
+- `eeprom test`：已在 COM12 验证，默认地址 `0x3FC0` 写读回 32 bytes 成功。
+- `eeprom writehex 0x3FE0 1122334455aabbcc` / `eeprom read 0x3FE0 8`：已在 COM12 验证，读回 `11 22 33 44 55 aa bb cc`。
+- `eeprom writehex 0x3FF8 0102030405060708` / `eeprom read 0x3FF8 8`：已在 COM12 验证，EEPROM 尾部边界写读回成功。
+- `param status`：已在 COM12 验证，显示当前为运行期参数，Flash 持久化未接入，并输出参数版本、dirty 状态和更新时间。
+- `param` / `param list`：已在 COM12 验证，能列出 7 个运行期参数，包含 HDC1080 温湿度单点校准 offset。
+- `param get modbus_addr`：已在 COM12 验证，能读取默认地址 `1`。
+- `param set modbus_addr 2`：已在 COM12 验证，能把运行期地址改为 `2`。
+- `param set modbus_addr 999`：已在 COM12 验证，能拒绝越界值并保持原值。
+- `param set env_temp_offset_mc -1000`：已在 COM12 验证，温度校准值相对原始值降低 1000 mC，滤波值按 1/8 系数逐步收敛。
+- `param set env_humi_offset_mpermil -5000`：已在 COM12 验证，湿度校准值相对原始值降低 5000 mpermil，滤波值按 1/8 系数逐步收敛。
+- `param defaults`：已在 COM12 验证，能恢复运行期默认值。
+- `param save`：已在 COM12 验证，明确提示持久化存储未接入。
+- 参数状态同步：已在 COM12 验证，`param set modbus_addr 2` 后 `param status` 从 `version=1 dirty=0` 变为 `version=2 dirty=1`，`data show` 同步显示 `param_ver=2 param_dirty=1`；`param defaults` 后同步显示 `param_ver=3 param_dirty=1`。
+
+## 后续命令分组建议
+
+后续增加参数、记录、网络等命令时，建议继续按模块分组，所有业务读写优先通过后台服务接口进入：
+
+| 分组 | 命令示例 | 说明 |
+| --- | --- | --- |
+| 系统 | `sys info`, `sys tick`, `sys threads` | RTOS 和固件状态 |
+| 数据 | `data`, `data watch` | 后台快照 |
+| RTC | `rtc`, `rtc set ...` | 时间读写 |
+| 参数 | `param list`, `param get`, `param set`, `param defaults`, `param status` | 运行期参数服务，Flash 持久化后续接入 |
+| 记录 | `record list`, `record show`, `record clear` | 后续事件记录 |
+| 硬件验证 | `key`, `led`, `lcd`, `hdc1080`, `eeprom` | bring-up 阶段保留 |

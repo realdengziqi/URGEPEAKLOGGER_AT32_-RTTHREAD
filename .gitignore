@@ -1,0 +1,50 @@
+# Local editor and OS files
+.vscode/
+.idea/
+.vs/
+*.user
+*.suo
+*.tmp
+*.bak
+*.bak-*
+Thumbs.db
+Desktop.ini
+
+# Logs
+*.log
+JLinkLog.txt
+*.build_log.htm
+
+# Keil / ARM build outputs
+**/Objects/
+**/objects/
+**/OBJ/
+**/Obj/
+**/Listings/
+**/listings/
+**/DebugConfig/
+*.o
+*.obj
+*.OBJ
+*.d
+*.crf
+*.dep
+*.lst
+*.LST
+*.lnp
+*.axf
+*.elf
+*.hex
+*.bin
+*.map
+*.M51
+
+# Keil per-user state
+*.uvgui.*
+*.uvguix.*
+
+# Generic generated build directories
+build/
+cmake-build-*/
+out/
+dist/

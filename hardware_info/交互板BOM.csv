@@ -1,0 +1,15 @@
+﻿Designators,Name,Value,Footprint,Manufacturer,MPN,SPN,Quantity
+"U1","","","fdbaca120411b559","","","",1
+"R1","","10Ω","9b1ba40a16109120","UNI-ROYAL(厚声)","0603WAF100JT5E","C22859",1
+"R2; R7; R8","","10kΩ","9b1ba40a16109120","YAGEO(国巨)","RT0603BRD0710KL","C95204",3
+"R3","","1kΩ","9b1ba40a16109120","UNI-ROYAL(厚声)","0603WAF1001T5E","C21190",1
+"C1; C7; C8; C10","","100nF","8d755adce2a8bbd4","HRE(芯声)","CGA0603X7R104K500JT","C6119867",4
+"U2","","","df55fe6c2409ea78","MSKSEMI(美森科)","AMS1117-3.3V","C5120765",1
+"C5; C6; C9","","10uF","d4d2a4b99f798bec","SAMSUNG(三星)","CL21A106KAYNNNE","C15850",3
+"R4; R5; R6","","2kΩ","9b1ba40a16109120","FOJAN(富捷)","FRC0603J202 TS","C2907137",3
+"LED4; LED5; LED6","","","b66e7e5d876e3ca8","国星光电","NCD0603R1","C84263",3
+"SW2; SW3; SW4; SW5; SW6","","","46da7d36d0a0e7ff","XUNPU(讯普)","TS-1009S-03826","C455243",5
+"FPC2","","","6da63572daa4ce06","JS(钜硕电子)","AFC07-S12ECA-00","C262585",1
+"FPC3","","","e50d74125c5bf070","XUNPU(讯普)","FPC-05F-16PH20","C2856801",1
+"S1","","","bee058006f081b82","TI(德州仪器)","HDC1080DMBR","C82227",1
+"Q1","","","6f22caf3249e8580","R+O(宏嘉诚)","S8050","C20069125",1
