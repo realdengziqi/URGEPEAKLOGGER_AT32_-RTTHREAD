@@ -1,3 +1,9 @@
 [submodule "external/rt-thread"]
 	path = external/rt-thread
 	url = https://github.com/RT-Thread/rt-thread.git
+[submodule "external/ugui"]
+	path = external/ugui
+	url = https://github.com/achimdoebler/UGUI.git
+[submodule "external/surge-ui-kit"]
+	path = external/surge-ui-kit
+	url = https://github.com/realdengziqi/surge-ui-ki.git
