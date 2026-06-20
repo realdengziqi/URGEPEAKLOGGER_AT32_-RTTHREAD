@@ -6,4 +6,4 @@
 	url = https://github.com/achimdoebler/UGUI.git
 [submodule "external/surge-ui-kit"]
 	path = external/surge-ui-kit
-	url = https://github.com/realdengziqi/surge-ui-ki.git
+	url = https://github.com/realdengziqi/surge-ui-kit.git
