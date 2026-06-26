@@ -1,10 +1,7 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
 <Project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="project_projx.xsd">
-
   <SchemaVersion>2.1</SchemaVersion>
-
   <Header>### uVision Project, (C) Keil Software</Header>
-
   <Targets>
     <Target>
       <TargetName>surge_rtthread_base_ac5</TargetName>
@@ -337,9 +334,9 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>AT32F403ARGT7,USE_STDPERIPH_DRIVER,__RTTHREAD__,__RT_KERNEL_SOURCE__</Define>
+              <Define>AT32F403ARGT7,USE_STDPERIPH_DRIVER,__RTTHREAD__,__RT_KERNEL_SOURCE__,SURGE_UI_USE_RTTHREAD</Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\app\inc;..\..\bsp\at32f403\inc;..\..\drivers\screen\inc;..\..\drivers\sensor\inc;..\..\drivers\storage\inc;..\..\vendor\AT32F403A_407_Firmware_Library_V2.2.2\libraries\drivers\inc;..\..\vendor\AT32F403A_407_Firmware_Library_V2.2.2\libraries\cmsis\cm4\core_support;..\..\vendor\AT32F403A_407_Firmware_Library_V2.2.2\libraries\cmsis\cm4\device_support;..\..\vendor\rt-thread-v5.2.2\include;..\..\vendor\rt-thread-v5.2.2\include\klibc;..\..\vendor\rt-thread-v5.2.2\libcpu\arm\cortex-m4;..\..\vendor\rt-thread-v5.2.2\components\finsh</IncludePath>
+              <IncludePath>..\..\app\inc;..\..\bsp\at32f403\inc;..\..\drivers\screen\inc;..\..\drivers\sensor\inc;..\..\drivers\storage\inc;..\..\vendor\AT32F403A_407_Firmware_Library_V2.2.2\libraries\drivers\inc;..\..\vendor\AT32F403A_407_Firmware_Library_V2.2.2\libraries\cmsis\cm4\core_support;..\..\vendor\AT32F403A_407_Firmware_Library_V2.2.2\libraries\cmsis\cm4\device_support;..\..\vendor\rt-thread-v5.2.2\include;..\..\vendor\rt-thread-v5.2.2\include\klibc;..\..\vendor\rt-thread-v5.2.2\libcpu\arm\cortex-m4;..\..\vendor\rt-thread-v5.2.2\components\finsh;..\..\vendor\ugui;..\..\external_port\ugui_port;..\..\external_port\surge_ui_kit</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -393,7 +390,77 @@
               <FileType>1</FileType>
               <FilePath>..\..\app\src\app_main.c</FilePath>
             </File>
-          <File><FileName>app_ui.c</FileName><FileType>1</FileType><FilePath>..\..\app\src\app_ui.c</FilePath></File><File><FileName>app_ui.h</FileName><FileType>5</FileType><FilePath>..\..\app\inc\app_ui.h</FilePath></File><File><FileName>app_data_service.c</FileName><FileType>1</FileType><FilePath>..\..\app\src\app_data_service.c</FilePath></File><File><FileName>app_data_service.h</FileName><FileType>5</FileType><FilePath>..\..\app\inc\app_data_service.h</FilePath></File><File><FileName>app_bringup.c</FileName><FileType>1</FileType><FilePath>..\..\app\src\app_bringup.c</FilePath></File><File><FileName>app_bringup.h</FileName><FileType>5</FileType><FilePath>..\..\app\inc\app_bringup.h</FilePath></File><File><FileName>app_key_input.c</FileName><FileType>1</FileType><FilePath>..\..\app\src\app_key_input.c</FilePath></File><File><FileName>app_key_input.h</FileName><FileType>5</FileType><FilePath>..\..\app\inc\app_key_input.h</FilePath></File><File><FileName>app_rtc.c</FileName><FileType>1</FileType><FilePath>..\..\app\src\app_rtc.c</FilePath></File><File><FileName>app_rtc.h</FileName><FileType>5</FileType><FilePath>..\..\app\inc\app_rtc.h</FilePath></File><File><FileName>app_shell.c</FileName><FileType>1</FileType><FilePath>..\..\app\src\app_shell.c</FilePath></File><File><FileName>app_shell.h</FileName><FileType>5</FileType><FilePath>..\..\app\inc\app_shell.h</FilePath></File><File><FileName>app_param_service.c</FileName><FileType>1</FileType><FilePath>..\..\app\src\app_param_service.c</FilePath></File><File><FileName>app_param_service.h</FileName><FileType>5</FileType><FilePath>..\..\app\inc\app_param_service.h</FilePath></File></Files>
+            <File>
+              <FileName>app_ui.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\app\src\app_ui.c</FilePath>
+            </File>
+            <File>
+              <FileName>app_ui.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\app\inc\app_ui.h</FilePath>
+            </File>
+            <File>
+              <FileName>app_data_service.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\app\src\app_data_service.c</FilePath>
+            </File>
+            <File>
+              <FileName>app_data_service.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\app\inc\app_data_service.h</FilePath>
+            </File>
+            <File>
+              <FileName>app_bringup.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\app\src\app_bringup.c</FilePath>
+            </File>
+            <File>
+              <FileName>app_bringup.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\app\inc\app_bringup.h</FilePath>
+            </File>
+            <File>
+              <FileName>app_key_input.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\app\src\app_key_input.c</FilePath>
+            </File>
+            <File>
+              <FileName>app_key_input.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\app\inc\app_key_input.h</FilePath>
+            </File>
+            <File>
+              <FileName>app_rtc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\app\src\app_rtc.c</FilePath>
+            </File>
+            <File>
+              <FileName>app_rtc.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\app\inc\app_rtc.h</FilePath>
+            </File>
+            <File>
+              <FileName>app_shell.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\app\src\app_shell.c</FilePath>
+            </File>
+            <File>
+              <FileName>app_shell.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\app\inc\app_shell.h</FilePath>
+            </File>
+            <File>
+              <FileName>app_param_service.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\app\src\app_param_service.c</FilePath>
+            </File>
+            <File>
+              <FileName>app_param_service.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\app\inc\app_param_service.h</FilePath>
+            </File>
+          <File><FileName>app_record_service.c</FileName><FileType>1</FileType><FilePath>..\..\app\src\app_record_service.c</FilePath></File><File><FileName>app_record_service.h</FileName><FileType>5</FileType><FilePath>..\..\app\inc\app_record_service.h</FilePath></File></Files>
         </Group>
         <Group>
           <GroupName>bsp</GroupName>
@@ -564,9 +631,9 @@
           <GroupName>readme</GroupName>
           <Files>
             <File>
-              <FileName>readme.txt</FileName>
+              <FileName>固件目录说明.md</FileName>
               <FileType>5</FileType>
-              <FilePath>..\..\README.md</FilePath>
+              <FilePath>..\..\固件目录说明.md</FilePath>
             </File>
           </Files>
         </Group>
@@ -685,16 +752,164 @@
             </File>
           </Files>
         </Group>
-      <Group><GroupName>drivers</GroupName><Files><File><FileName>screen_st7789.c</FileName><FileType>1</FileType><FilePath>..\..\drivers\screen\src\screen_st7789.c</FilePath></File><File><FileName>screen_st7789.h</FileName><FileType>5</FileType><FilePath>..\..\drivers\screen\inc\screen_st7789.h</FilePath></File><File><FileName>sensor_hdc1080.c</FileName><FileType>1</FileType><FilePath>..\..\drivers\sensor\src\sensor_hdc1080.c</FilePath></File><File><FileName>sensor_hdc1080.h</FileName><FileType>5</FileType><FilePath>..\..\drivers\sensor\inc\sensor_hdc1080.h</FilePath></File><File><FileName>storage_at24c128.c</FileName><FileType>1</FileType><FilePath>..\..\drivers\storage\src\storage_at24c128.c</FilePath></File><File><FileName>storage_at24c128.h</FileName><FileType>5</FileType><FilePath>..\..\drivers\storage\inc\storage_at24c128.h</FilePath></File></Files></Group><Group><GroupName>rt-thread_finsh</GroupName><Files><File><FileName>shell.c</FileName><FileType>1</FileType><FilePath>..\..\vendor\rt-thread-v5.2.2\components\finsh\shell.c</FilePath></File><File><FileName>shell.h</FileName><FileType>5</FileType><FilePath>..\..\vendor\rt-thread-v5.2.2\components\finsh\shell.h</FilePath></File><File><FileName>msh.c</FileName><FileType>1</FileType><FilePath>..\..\vendor\rt-thread-v5.2.2\components\finsh\msh.c</FilePath></File><File><FileName>msh.h</FileName><FileType>5</FileType><FilePath>..\..\vendor\rt-thread-v5.2.2\components\finsh\msh.h</FilePath></File><File><FileName>finsh.h</FileName><FileType>5</FileType><FilePath>..\..\vendor\rt-thread-v5.2.2\components\finsh\finsh.h</FilePath></File></Files></Group></Groups>
+        <Group>
+          <GroupName>drivers</GroupName>
+          <Files>
+            <File>
+              <FileName>screen_st7789.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\drivers\screen\src\screen_st7789.c</FilePath>
+            </File>
+            <File>
+              <FileName>screen_st7789.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\drivers\screen\inc\screen_st7789.h</FilePath>
+            </File>
+            <File>
+              <FileName>sensor_hdc1080.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\drivers\sensor\src\sensor_hdc1080.c</FilePath>
+            </File>
+            <File>
+              <FileName>sensor_hdc1080.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\drivers\sensor\inc\sensor_hdc1080.h</FilePath>
+            </File>
+            <File>
+              <FileName>storage_at24c128.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\drivers\storage\src\storage_at24c128.c</FilePath>
+            </File>
+            <File>
+              <FileName>storage_at24c128.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\drivers\storage\inc\storage_at24c128.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>rt-thread_finsh</GroupName>
+          <Files>
+            <File>
+              <FileName>shell.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\vendor\rt-thread-v5.2.2\components\finsh\shell.c</FilePath>
+            </File>
+            <File>
+              <FileName>shell.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\vendor\rt-thread-v5.2.2\components\finsh\shell.h</FilePath>
+            </File>
+            <File>
+              <FileName>msh.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\vendor\rt-thread-v5.2.2\components\finsh\msh.c</FilePath>
+            </File>
+            <File>
+              <FileName>msh.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\vendor\rt-thread-v5.2.2\components\finsh\msh.h</FilePath>
+            </File>
+            <File>
+              <FileName>finsh.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\vendor\rt-thread-v5.2.2\components\finsh\finsh.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>ui_middleware</GroupName>
+          <Files>
+            <File>
+              <FileName>ugui.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\vendor\ugui\ugui.c</FilePath>
+            </File>
+            <File>
+              <FileName>ugui.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\vendor\ugui\ugui.h</FilePath>
+            </File>
+            <File>
+              <FileName>ugui_config.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\vendor\ugui\ugui_config.h</FilePath>
+            </File>
+            <File>
+              <FileName>system.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\vendor\ugui\system.h</FilePath>
+            </File>
+            <File>
+              <FileName>ugui_port.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\external_port\ugui_port\ugui_port.c</FilePath>
+            </File>
+            <File>
+              <FileName>ugui_port.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\external_port\ugui_port\ugui_port.h</FilePath>
+            </File>
+            <File>
+              <FileName>surge_ui_widgets.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\external_port\surge_ui_kit\surge_ui_widgets.c</FilePath>
+            </File>
+            <File>
+              <FileName>surge_ui_widgets.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\external_port\surge_ui_kit\surge_ui_widgets.h</FilePath>
+            </File>
+            <File>
+              <FileName>surge_ui_style.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\external_port\surge_ui_kit\surge_ui_style.h</FilePath>
+            </File>
+            <File>
+              <FileName>surge_ui_types.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\external_port\surge_ui_kit\surge_ui_types.h</FilePath>
+            </File>
+            <File>
+              <FileName>surge_ui_font_zh_18.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\external_port\surge_ui_kit\surge_ui_font_zh_18.c</FilePath>
+            </File>
+            <File>
+              <FileName>surge_ui_font_zh_18.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\external_port\surge_ui_kit\surge_ui_font_zh_18.h</FilePath>
+            </File>
+            <File>
+              <FileName>surge_ui_font_zh_20.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\external_port\surge_ui_kit\surge_ui_font_zh_20.c</FilePath>
+            </File>
+            <File>
+              <FileName>surge_ui_font_zh_20.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\external_port\surge_ui_kit\surge_ui_font_zh_20.h</FilePath>
+            </File>
+            <File>
+              <FileName>surge_ui_font_zh_24.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\external_port\surge_ui_kit\surge_ui_font_zh_24.c</FilePath>
+            </File>
+            <File>
+              <FileName>surge_ui_font_zh_24.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\external_port\surge_ui_kit\surge_ui_font_zh_24.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+      </Groups>
     </Target>
   </Targets>
-
   <RTE>
     <apis></apis>
     <components></components>
     <files></files>
   </RTE>
-
   <LayerInfo>
     <Layers>
       <Layer>
@@ -704,5 +919,4 @@
       </Layer>
     </Layers>
   </LayerInfo>
-
 </Project>

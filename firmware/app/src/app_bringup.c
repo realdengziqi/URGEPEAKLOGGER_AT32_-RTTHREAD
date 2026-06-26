@@ -2,11 +2,15 @@
 
 #include <string.h>
 
-#include "app_ui.h"
 #include "board.h"
-#include "screen_st7789.h"
+#include "net_w5500.h"
 #include "sensor_hdc1080.h"
 #include "storage_at24c128.h"
+
+#if defined(SURGE_ENABLE_UI) && (SURGE_ENABLE_UI != 0)
+#include "app_ui.h"
+#include "screen_st7789.h"
+#endif
 
 #define KEY_WATCH_PERIOD_MS              50U
 #define KEY_WATCH_IDLE_STATE             0xFFFFFFFFU
@@ -182,10 +186,13 @@ void app_bringup_print_help(void)
 {
     rt_kprintf("[INFO] bringup: key, key watch|key watch off\r\n");
     rt_kprintf("[INFO] bringup: led data|test on|off|toggle\r\n");
+#if defined(SURGE_ENABLE_UI) && (SURGE_ENABLE_UI != 0)
     rt_kprintf("[INFO] bringup: lcd init|red|green|blue|black|white|demo|ui|backlight on|backlight off\r\n");
     rt_kprintf("[INFO] bringup: lcd bus status\r\n");
+#endif
     rt_kprintf("[INFO] bringup: hdc1080 init|id|read\r\n");
     rt_kprintf("[INFO] bringup: eeprom init|info|read <addr> <len>|write <addr> <bytes...>|writehex <addr> <hex>|test [addr]\r\n");
+    rt_kprintf("[INFO] bringup: w5500 init|status|reg <addr>|write <addr> <value>\r\n");
 }
 
 rt_bool_t app_bringup_process_command(const char *cmd)
@@ -257,84 +264,95 @@ rt_bool_t app_bringup_process_command(const char *cmd)
 
         return RT_TRUE;
     }
-    else if (strcmp(cmd, "lcd init") == 0)
+    else if (strncmp(cmd, "lcd", 3) == 0 && (cmd[3] == '\0' || cmd[3] == ' '))
     {
-        screen_st7789_init();
-        screen_st7789_fill_color(SCREEN_ST7789_COLOR_BLACK);
-        rt_kprintf("[INFO] lcd: init done, filled black\r\n");
+#if defined(SURGE_ENABLE_UI) && (SURGE_ENABLE_UI != 0)
+        if (strcmp(cmd, "lcd init") == 0)
+        {
+            screen_st7789_init();
+            screen_st7789_fill_color(SCREEN_ST7789_COLOR_BLACK);
+            rt_kprintf("[INFO] lcd: init done, filled black\r\n");
+            return RT_TRUE;
+        }
+        else if (strcmp(cmd, "lcd red") == 0)
+        {
+            screen_st7789_fill_color(SCREEN_ST7789_COLOR_RED);
+            rt_kprintf("[INFO] lcd: filled red\r\n");
+            return RT_TRUE;
+        }
+        else if (strcmp(cmd, "lcd green") == 0)
+        {
+            screen_st7789_fill_color(SCREEN_ST7789_COLOR_GREEN);
+            rt_kprintf("[INFO] lcd: filled green\r\n");
+            return RT_TRUE;
+        }
+        else if (strcmp(cmd, "lcd blue") == 0)
+        {
+            screen_st7789_fill_color(SCREEN_ST7789_COLOR_BLUE);
+            rt_kprintf("[INFO] lcd: filled blue\r\n");
+            return RT_TRUE;
+        }
+        else if (strcmp(cmd, "lcd black") == 0)
+        {
+            screen_st7789_fill_color(SCREEN_ST7789_COLOR_BLACK);
+            rt_kprintf("[INFO] lcd: filled black\r\n");
+            return RT_TRUE;
+        }
+        else if (strcmp(cmd, "lcd white") == 0)
+        {
+            screen_st7789_fill_color(SCREEN_ST7789_COLOR_WHITE);
+            rt_kprintf("[INFO] lcd: filled white\r\n");
+            return RT_TRUE;
+        }
+        else if (strcmp(cmd, "lcd demo") == 0)
+        {
+            screen_st7789_draw_demo();
+            rt_kprintf("[INFO] lcd: drew demo screen\r\n");
+            return RT_TRUE;
+        }
+        else if (strcmp(cmd, "lcd ui") == 0)
+        {
+            app_ui_draw_home();
+            rt_kprintf("[INFO] lcd: drew ui home screen\r\n");
+            return RT_TRUE;
+        }
+        else if (strcmp(cmd, "lcd backlight on") == 0)
+        {
+            screen_st7789_gpio_init();
+            screen_st7789_backlight_set(RT_TRUE);
+            rt_kprintf("[INFO] lcd: backlight on\r\n");
+            return RT_TRUE;
+        }
+        else if (strcmp(cmd, "lcd backlight off") == 0)
+        {
+            screen_st7789_gpio_init();
+            screen_st7789_backlight_set(RT_FALSE);
+            rt_kprintf("[INFO] lcd: backlight off\r\n");
+            return RT_TRUE;
+        }
+        else if (strcmp(cmd, "lcd bus normal") == 0)
+        {
+            screen_st7789_bus_swap_set(RT_FALSE);
+            rt_kprintf("[WARN] lcd: bus is fixed to hardware SPI2, sck=PB13 mosi=PB15\r\n");
+            return RT_TRUE;
+        }
+        else if (strcmp(cmd, "lcd bus swap") == 0)
+        {
+            screen_st7789_bus_swap_set(RT_TRUE);
+            rt_kprintf("[WARN] lcd: bus swap is disabled, using hardware SPI2 sck=PB13 mosi=PB15\r\n");
+            return RT_TRUE;
+        }
+        else if (strcmp(cmd, "lcd bus status") == 0)
+        {
+            rt_kprintf("[INFO] lcd: bus hardware spi2, sck=PB13 mosi=PB15 mode=3 div=8\r\n");
+            return RT_TRUE;
+        }
+#else
+        rt_kprintf("[WARN] lcd: UI/LCD code is not linked in this backend target\r\n");
         return RT_TRUE;
-    }
-    else if (strcmp(cmd, "lcd red") == 0)
-    {
-        screen_st7789_fill_color(SCREEN_ST7789_COLOR_RED);
-        rt_kprintf("[INFO] lcd: filled red\r\n");
-        return RT_TRUE;
-    }
-    else if (strcmp(cmd, "lcd green") == 0)
-    {
-        screen_st7789_fill_color(SCREEN_ST7789_COLOR_GREEN);
-        rt_kprintf("[INFO] lcd: filled green\r\n");
-        return RT_TRUE;
-    }
-    else if (strcmp(cmd, "lcd blue") == 0)
-    {
-        screen_st7789_fill_color(SCREEN_ST7789_COLOR_BLUE);
-        rt_kprintf("[INFO] lcd: filled blue\r\n");
-        return RT_TRUE;
-    }
-    else if (strcmp(cmd, "lcd black") == 0)
-    {
-        screen_st7789_fill_color(SCREEN_ST7789_COLOR_BLACK);
-        rt_kprintf("[INFO] lcd: filled black\r\n");
-        return RT_TRUE;
-    }
-    else if (strcmp(cmd, "lcd white") == 0)
-    {
-        screen_st7789_fill_color(SCREEN_ST7789_COLOR_WHITE);
-        rt_kprintf("[INFO] lcd: filled white\r\n");
-        return RT_TRUE;
-    }
-    else if (strcmp(cmd, "lcd demo") == 0)
-    {
-        screen_st7789_draw_demo();
-        rt_kprintf("[INFO] lcd: drew demo screen\r\n");
-        return RT_TRUE;
-    }
-    else if (strcmp(cmd, "lcd ui") == 0)
-    {
-        app_ui_draw_home();
-        rt_kprintf("[INFO] lcd: drew ui home screen\r\n");
-        return RT_TRUE;
-    }
-    else if (strcmp(cmd, "lcd backlight on") == 0)
-    {
-        screen_st7789_gpio_init();
-        screen_st7789_backlight_set(RT_TRUE);
-        rt_kprintf("[INFO] lcd: backlight on\r\n");
-        return RT_TRUE;
-    }
-    else if (strcmp(cmd, "lcd backlight off") == 0)
-    {
-        screen_st7789_gpio_init();
-        screen_st7789_backlight_set(RT_FALSE);
-        rt_kprintf("[INFO] lcd: backlight off\r\n");
-        return RT_TRUE;
-    }
-    else if (strcmp(cmd, "lcd bus normal") == 0)
-    {
-        screen_st7789_bus_swap_set(RT_FALSE);
-        rt_kprintf("[WARN] lcd: bus is fixed to hardware SPI2, sck=PB13 mosi=PB15\r\n");
-        return RT_TRUE;
-    }
-    else if (strcmp(cmd, "lcd bus swap") == 0)
-    {
-        screen_st7789_bus_swap_set(RT_TRUE);
-        rt_kprintf("[WARN] lcd: bus swap is disabled, using hardware SPI2 sck=PB13 mosi=PB15\r\n");
-        return RT_TRUE;
-    }
-    else if (strcmp(cmd, "lcd bus status") == 0)
-    {
-        rt_kprintf("[INFO] lcd: bus hardware spi2, sck=PB13 mosi=PB15 mode=3 div=8\r\n");
+#endif
+
+        rt_kprintf("[WARN] cli: unsupported lcd command\r\n");
         return RT_TRUE;
     }
     else if (strcmp(cmd, "hdc1080") == 0)
@@ -579,6 +597,93 @@ rt_bool_t app_bringup_process_command(const char *cmd)
         rt_kprintf("[INFO] eeprom: test ok addr=0x%04x len=%u\r\n",
                    address,
                    (rt_uint32_t)sizeof(tx));
+        return RT_TRUE;
+    }
+    else if (strcmp(cmd, "w5500") == 0 || strcmp(cmd, "w5500 status") == 0)
+    {
+        net_w5500_status_t status;
+        rt_err_t result = net_w5500_read_status(&status);
+
+        if (result == RT_EOK)
+        {
+            rt_kprintf("[INFO] w5500: version=0x%02x phycfgr=0x%02x link=%s speed=%s duplex=%s int=%u\r\n",
+                       status.version,
+                       status.phycfgr,
+                       net_w5500_link_name(status.link_up),
+                       status.speed_100m ? "100M" : "10M",
+                       status.full_duplex ? "full" : "half",
+                       status.int_pin_level);
+        }
+        else
+        {
+            rt_kprintf("[WARN] w5500: status failed %d, check SPI1 PB3/PB4/PB5 PC13/PC15 and 3V3\r\n",
+                       result);
+        }
+        return RT_TRUE;
+    }
+    else if (strcmp(cmd, "w5500 init") == 0)
+    {
+        rt_err_t result = net_w5500_init();
+
+        if (result == RT_EOK)
+        {
+            rt_kprintf("[INFO] w5500: init ok spi1=PB3/PB4/PB5 cs=PC13 int=PC14 rst=PC15\r\n");
+        }
+        else
+        {
+            rt_kprintf("[WARN] w5500: init failed %d, VERSIONR expected 0x04\r\n", result);
+        }
+        return RT_TRUE;
+    }
+    else if (strncmp(cmd, "w5500 reg ", 10) == 0)
+    {
+        const char *cursor = cmd + 10;
+        rt_uint32_t address;
+        rt_uint8_t value = 0U;
+        rt_err_t result;
+
+        if (app_bringup_parse_u32_token(&cursor, &address) == RT_FALSE ||
+            address > 0xFFFFU)
+        {
+            rt_kprintf("[WARN] w5500: usage w5500 reg <common_addr>\r\n");
+            return RT_TRUE;
+        }
+
+        result = net_w5500_read_common((rt_uint16_t)address, &value);
+        if (result == RT_EOK)
+        {
+            rt_kprintf("[INFO] w5500: reg[0x%04x]=0x%02x\r\n", address, value);
+        }
+        else
+        {
+            rt_kprintf("[WARN] w5500: reg read failed %d\r\n", result);
+        }
+        return RT_TRUE;
+    }
+    else if (strncmp(cmd, "w5500 write ", 12) == 0)
+    {
+        const char *cursor = cmd + 12;
+        rt_uint32_t address;
+        rt_uint32_t value;
+        rt_err_t result;
+
+        if (app_bringup_parse_u32_token(&cursor, &address) == RT_FALSE ||
+            app_bringup_parse_u32_token(&cursor, &value) == RT_FALSE ||
+            address > 0xFFFFU || value > 0xFFU)
+        {
+            rt_kprintf("[WARN] w5500: usage w5500 write <common_addr> <byte>\r\n");
+            return RT_TRUE;
+        }
+
+        result = net_w5500_write_common((rt_uint16_t)address, (rt_uint8_t)value);
+        if (result == RT_EOK)
+        {
+            rt_kprintf("[INFO] w5500: reg[0x%04x] <= 0x%02x\r\n", address, value);
+        }
+        else
+        {
+            rt_kprintf("[WARN] w5500: reg write failed %d\r\n", result);
+        }
         return RT_TRUE;
     }
 

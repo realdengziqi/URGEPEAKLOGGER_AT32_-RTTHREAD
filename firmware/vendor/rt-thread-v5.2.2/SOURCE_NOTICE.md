@@ -40,6 +40,7 @@ Copied source set:
 - src/klibc/rt_vsscanf.c
 - libcpu/arm/cortex-m4/cpuport.c
 - libcpu/arm/cortex-m4/context_rvds.S
+- libcpu/arm/cortex-m4/context_gcc.S copied on 2026-06-22 for the CMake/GCC target
 - components/finsh/finsh.h
 - components/finsh/msh.c
 - components/finsh/msh.h

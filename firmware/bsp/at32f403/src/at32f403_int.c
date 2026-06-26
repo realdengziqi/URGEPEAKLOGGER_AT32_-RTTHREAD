@@ -3,6 +3,8 @@
 #include "at32f403_int.h"
 #include "board.h"
 #include "at32f403a_407_usart.h"
+#include "app_buzzer_service.h"
+#include "freemodbus_port.h"
 
 void NMI_Handler(void)
 {
@@ -49,5 +51,19 @@ void USART1_IRQHandler(void)
         board_debug_console_rx_isr((rt_uint8_t)(usart_data_receive(USART1) & 0xFFU));
     }
 
+    rt_interrupt_leave();
+}
+
+void USART3_IRQHandler(void)
+{
+    rt_interrupt_enter();
+    freemodbus_port_usart3_isr();
+    rt_interrupt_leave();
+}
+
+void TMR7_GLOBAL_IRQHandler(void)
+{
+    rt_interrupt_enter();
+    buzzer_service_timer_isr();
     rt_interrupt_leave();
 }

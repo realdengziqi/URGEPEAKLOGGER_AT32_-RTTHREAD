@@ -1,0 +1,9 @@
+device -AT32F403ARGT7
+if SWD
+speed 4000
+r
+h
+loadfile build/gcc-debug/surge_backend_serial.hex
+r
+g
+qc

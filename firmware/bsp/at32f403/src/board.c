@@ -10,6 +10,9 @@
 #if defined(__CC_ARM) || defined(__ARMCC_VERSION)
 extern int Image$$RW_IRAM1$$ZI$$Limit;
 #define HEAP_BEGIN                      (&Image$$RW_IRAM1$$ZI$$Limit)
+#elif defined(__GNUC__)
+extern int _end;
+#define HEAP_BEGIN                      (&_end)
 #else
 #define HEAP_BEGIN                      RT_NULL
 #endif

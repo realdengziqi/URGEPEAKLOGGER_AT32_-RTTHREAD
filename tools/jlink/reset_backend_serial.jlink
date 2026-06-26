@@ -1,0 +1,6 @@
+device -AT32F403ARGT7
+if SWD
+speed 4000
+r
+g
+qc

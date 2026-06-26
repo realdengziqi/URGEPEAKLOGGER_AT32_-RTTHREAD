@@ -1,13 +1,21 @@
 #include "app_data_service.h"
 
+#include "app_alarm_service.h"
+#include "app_buzzer_service.h"
+#include "app_surge_service.h"
+#include "sensor_adc_raw.h"
+#include "sensor_digital_input.h"
 #include "sensor_hdc1080.h"
 
-#define DATA_SERVICE_THREAD_STACK_SIZE   768U
+#include <string.h>
+
+#define DATA_SERVICE_THREAD_STACK_SIZE   2048U
 #define DATA_SERVICE_THREAD_PRIORITY     18U
 #define DATA_SERVICE_THREAD_TIMESLICE    10U
 #define DATA_SERVICE_UPDATE_PERIOD_MS    200U
 #define DATA_SERVICE_RTC_READ_PERIOD_MS  1000U
 #define DATA_SERVICE_ENV_READ_PERIOD_MS  1000U
+#define DATA_SERVICE_ADC_READ_PERIOD_MS  1000U
 #define DATA_SERVICE_ENV_FILTER_SHIFT    3U
 #define DATA_SERVICE_HUMI_MIN_MPERMIL    0
 #define DATA_SERVICE_HUMI_MAX_MPERMIL    100000
@@ -49,9 +57,16 @@ static void data_service_thread_entry(void *parameter)
     device_data_snapshot_t local_snapshot;
     rt_uint32_t last_rtc_read_ms = 0U;
     rt_uint32_t last_env_read_ms = 0U;
+    rt_uint32_t last_adc_read_ms = 0U;
     app_rtc_datetime_t datetime;
+    surge_service_snapshot_t surge_snapshot;
+    sensor_adc_raw_sample_t adc_sample;
     sensor_hdc1080_sample_t env_sample;
+    sensor_digital_input_sample_t di_sample;
+    alarm_service_input_t alarm_input;
+    alarm_service_snapshot_t alarm_snapshot;
     rt_bool_t env_filter_ready = RT_FALSE;
+    rt_bool_t ntc_filter_ready = RT_FALSE;
 
     RT_UNUSED(parameter);
 
@@ -63,6 +78,23 @@ static void data_service_thread_entry(void *parameter)
     else
     {
         local_snapshot.sensor_valid_flags &= (rt_uint8_t)~DATA_SERVICE_SENSOR_HDC1080_VALID;
+    }
+    if (sensor_digital_input_init() == RT_EOK)
+    {
+        local_snapshot.sensor_valid_flags |= DATA_SERVICE_SENSOR_DI_VALID;
+    }
+    else
+    {
+        local_snapshot.sensor_valid_flags &= (rt_uint8_t)~DATA_SERVICE_SENSOR_DI_VALID;
+    }
+    if (sensor_adc_raw_init() == RT_EOK)
+    {
+        local_snapshot.sensor_valid_flags |= DATA_SERVICE_SENSOR_ADC_VALID;
+    }
+    else
+    {
+        local_snapshot.sensor_valid_flags &= (rt_uint8_t)~DATA_SERVICE_SENSOR_ADC_VALID;
+        local_snapshot.sensor_valid_flags &= (rt_uint8_t)~DATA_SERVICE_SENSOR_NTC_VALID;
     }
 
     while (1)
@@ -129,14 +161,82 @@ static void data_service_thread_entry(void *parameter)
             }
         }
 
-        local_snapshot.surge_peak_value_milli_kv += 100;
-        if (local_snapshot.surge_peak_value_milli_kv > 99900)
+        if (sensor_digital_input_read(&di_sample) == RT_EOK)
         {
-            local_snapshot.surge_peak_value_milli_kv = 0;
+            local_snapshot.digital_input_raw_state = di_sample.raw_state;
+            local_snapshot.sensor_valid_flags |= DATA_SERVICE_SENSOR_DI_VALID;
+        }
+        else
+        {
+            local_snapshot.sensor_valid_flags &= (rt_uint8_t)~DATA_SERVICE_SENSOR_DI_VALID;
         }
 
-        local_snapshot.ntc_temp_milli_c = 25300 + (rt_int32_t)((local_snapshot.update_count % 20U) * 10U);
-        local_snapshot.alarm_state = DATA_SERVICE_ALARM_NORMAL;
+        if ((local_snapshot.timestamp_ms - last_adc_read_ms) >= DATA_SERVICE_ADC_READ_PERIOD_MS)
+        {
+            last_adc_read_ms = local_snapshot.timestamp_ms;
+            if (sensor_adc_raw_read(&adc_sample) == RT_EOK)
+            {
+                local_snapshot.ntc_adc_raw = adc_sample.ntc_raw;
+                local_snapshot.surge_adc_raw = adc_sample.surge_raw;
+                surge_service_update_adc_raw(adc_sample.surge_raw, local_snapshot.timestamp_ms);
+                surge_service_get_snapshot(&surge_snapshot);
+                local_snapshot.surge_adc_raw = surge_snapshot.current_raw;
+                local_snapshot.surge_peak_raw = surge_snapshot.peak_raw;
+                local_snapshot.surge_peak_delta_raw = surge_snapshot.peak_delta_raw;
+                local_snapshot.surge_threshold_delta_raw = surge_snapshot.threshold_delta_raw;
+                local_snapshot.surge_trigger_count = surge_snapshot.trigger_count;
+                local_snapshot.surge_status = (rt_uint8_t)surge_snapshot.status;
+                local_snapshot.sensor_valid_flags |= DATA_SERVICE_SENSOR_ADC_VALID;
+
+                if (adc_sample.ntc_temp_valid != 0U)
+                {
+                    if (ntc_filter_ready == RT_FALSE)
+                    {
+                        local_snapshot.ntc_temp_milli_c = adc_sample.ntc_temp_milli_c;
+                        ntc_filter_ready = RT_TRUE;
+                    }
+                    else
+                    {
+                        local_snapshot.ntc_temp_milli_c =
+                            data_service_filter_i32(local_snapshot.ntc_temp_milli_c,
+                                                    adc_sample.ntc_temp_milli_c);
+                    }
+                    local_snapshot.sensor_valid_flags |= DATA_SERVICE_SENSOR_NTC_VALID;
+                }
+                else
+                {
+                    local_snapshot.sensor_valid_flags &= (rt_uint8_t)~DATA_SERVICE_SENSOR_NTC_VALID;
+                }
+            }
+            else
+            {
+                local_snapshot.sensor_valid_flags &= (rt_uint8_t)~DATA_SERVICE_SENSOR_ADC_VALID;
+                local_snapshot.sensor_valid_flags &= (rt_uint8_t)~DATA_SERVICE_SENSOR_NTC_VALID;
+            }
+        }
+
+        local_snapshot.surge_peak_value_milli_kv = 0;
+
+        memset(&alarm_input, 0, sizeof(alarm_input));
+        alarm_input.timestamp_ms = local_snapshot.timestamp_ms;
+        alarm_input.time_valid = local_snapshot.time_valid;
+        alarm_input.datetime = local_snapshot.datetime;
+        alarm_input.sensor_valid_flags = local_snapshot.sensor_valid_flags;
+        alarm_input.ntc_temp_milli_c = local_snapshot.ntc_temp_milli_c;
+        alarm_input.digital_input_state = local_snapshot.digital_input_raw_state;
+        (void)alarm_service_update(&alarm_input);
+        if (alarm_service_get_snapshot(&alarm_snapshot) == RT_EOK &&
+            alarm_snapshot.active_count > 0U)
+        {
+            local_snapshot.alarm_state = DATA_SERVICE_ALARM_ACTIVE;
+        }
+        else
+        {
+            local_snapshot.alarm_state = DATA_SERVICE_ALARM_NORMAL;
+        }
+        buzzer_service_set_alarm_active(
+            (local_snapshot.alarm_state == DATA_SERVICE_ALARM_ACTIVE) ? RT_TRUE : RT_FALSE);
+
         local_snapshot.rs485_online = 1U;
         local_snapshot.tcp_connected = 0U;
         if (param_service_get_status(&local_snapshot.param_status) != RT_EOK)
@@ -166,13 +266,21 @@ rt_err_t data_service_init(void)
     data_service_snapshot.datetime.minute = 0U;
     data_service_snapshot.datetime.second = 0U;
     data_service_snapshot.surge_peak_value_milli_kv = 0;
+    data_service_snapshot.surge_peak_raw = 2048U;
+    data_service_snapshot.surge_peak_delta_raw = 0U;
+    data_service_snapshot.surge_threshold_delta_raw = 300U;
+    data_service_snapshot.surge_trigger_count = 0U;
+    data_service_snapshot.surge_status = 0U;
     data_service_snapshot.ntc_temp_milli_c = 25300;
+    data_service_snapshot.ntc_adc_raw = 0U;
+    data_service_snapshot.surge_adc_raw = 0U;
     data_service_snapshot.env_temp_raw_milli_c = 25300;
     data_service_snapshot.env_humi_raw_milli_percent = 45000;
     data_service_snapshot.env_temp_calibrated_milli_c = 25300;
     data_service_snapshot.env_humi_calibrated_milli_percent = 45000;
     data_service_snapshot.env_temp_milli_c = 25300;
     data_service_snapshot.env_humi_milli_percent = 45000;
+    data_service_snapshot.digital_input_raw_state = 0U;
     data_service_snapshot.sensor_valid_flags = 0U;
     data_service_snapshot.alarm_state = DATA_SERVICE_ALARM_NORMAL;
     data_service_snapshot.rs485_online = 1U;
@@ -192,6 +300,9 @@ rt_err_t data_service_init(void)
     {
         data_service_snapshot.time_valid = 0U;
     }
+
+    surge_service_init();
+    (void)alarm_service_init();
 
     data_service_thread = rt_thread_create("data_svc",
                                            data_service_thread_entry,

@@ -14,6 +14,17 @@
 
 #include <stdint.h>
 #include <stddef.h>
+
+#if defined(__GNUC__) && !defined(__clock_t_defined)
+typedef long             clock_t;
+#define __clock_t_defined
+#endif
+
+#if defined(__GNUC__) && !defined(_TIME_T_DECLARED)
+typedef long             time_t;
+#define _TIME_T_DECLARED
+#endif
+
 #include <time.h>
 
 #ifdef __cplusplus
@@ -27,7 +38,12 @@ typedef unsigned short   uid_t;
 typedef unsigned short   gid_t;
 typedef signed long      off_t;
 typedef int              mode_t;
+#if defined(__GNUC__)
+typedef int              ssize_t;       /* Match newlib _ssize_t on arm-none-eabi. */
+#define _SSIZE_T_DECLARED
+#else
 typedef signed long      ssize_t;       /* Used for a count of bytes or an error indication. */
+#endif
 typedef unsigned long    __timer_t;
 typedef __timer_t        timer_t;
 typedef long             suseconds_t;   /* microseconds. */

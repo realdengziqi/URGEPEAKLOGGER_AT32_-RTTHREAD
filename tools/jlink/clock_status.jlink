@@ -1,0 +1,8 @@
+device -AT32F403ARGT7
+if SWD
+speed 4000
+h
+mem32 0x20000008 1
+mem32 0xE000E010 4
+mem32 0x40021000 20
+qc

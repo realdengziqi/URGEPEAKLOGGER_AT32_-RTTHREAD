@@ -1,5 +1,6 @@
 #include "app_key_input.h"
 
+#include "app_buzzer_service.h"
 #include "board.h"
 
 #define APP_KEY_DEBOUNCE_SAMPLES         2U
@@ -47,6 +48,7 @@ app_key_event_t app_key_input_poll(void)
 {
     rt_uint32_t sample;
     rt_uint32_t newly_pressed;
+    app_key_event_t event;
 
     sample = board_interaction_key_read();
 
@@ -73,5 +75,11 @@ app_key_event_t app_key_input_poll(void)
     newly_pressed = key_stable_state & (~key_reported_state);
     key_reported_state = key_stable_state;
 
-    return app_key_pick_pressed_event(newly_pressed);
+    event = app_key_pick_pressed_event(newly_pressed);
+    if (event != APP_KEY_EVENT_NONE)
+    {
+        (void)buzzer_service_beep(0U);
+    }
+
+    return event;
 }
