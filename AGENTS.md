@@ -86,7 +86,7 @@
 
 # 项目文件要求
 
-所有要参与项目编译的文件都应该放到 `firmware` 目录里。也就是说 `external` 里的文件如果要用到，需要先复制到 `firmware` 里再添加到 Keil 工程。
+所有要参与项目编译的文件都应该放到 `firmware` 目录里。也就是说 `external` 里的文件如果要用到，需要先复制到 `firmware/vendor` 或 `firmware/external_port`，并由 CMake 构建脚本显式纳入构建。
 
 推荐结构：
 
@@ -101,13 +101,16 @@ project/
     app/
     bsp/
     drivers/
+    cmake/
+    linker/
     middleware/
     protocol/
     vendor/
     external_port/
   tools/
-    build.ps1
-    flash.ps1
+    build_cmake.ps1
+    flash_jlink.ps1
+    reset_jlink.ps1
 ```
 
 如果现有工程结构不同，优先遵守现有结构，不要为了目录规范做大规模搬迁。
@@ -117,29 +120,38 @@ project/
 修改代码后，优先执行：
 
 ```powershell
-.\tools\build.ps1
+.\tools\build_cmake.ps1 -Preset gcc-release
 ```
 
-当前 `tools` 目录中的构建脚本：
+当前主工具链为 **GCC + CMake + Ninja + J-Link CLI**。Keil / MDK 工程路径已从主线删除，不再作为备用构建路径。
 
-- `tools/build.ps1`：Keil MDK 命令行构建脚本。
-  - 默认 Target：`surge_rtthread_base_ac5`
-  - Keil 工程：`firmware/project/mdk_v5/surge_rtthread_base.uvprojx`
-  - 构建日志：`firmware/project/mdk_v5/<Target>_build.log`
-  - 默认执行 Keil `-r` 重新构建。
-  - 使用 `.\tools\build.ps1 -Build` 时执行 Keil `-b` 构建。
-  - 可用 `.\tools\build.ps1 -Target <KeilTargetName>` 指定其他 Keil Target。
-  - 脚本会自动查找 `C:\Keil_v5\UV4\UV4.exe` 或 `C:\Keil\UV4\UV4.exe`。
-- `tools/flash.ps1`：Keil MDK 命令行烧录脚本。
-  - 默认 Target：`surge_rtthread_base_ac5`
-  - Keil 工程：`firmware/project/mdk_v5/surge_rtthread_base.uvprojx`
-  - 烧录日志：`firmware/project/mdk_v5/<Target>_flash.log`
-  - 使用 Keil `-f` 执行 Flash Download。
-  - 使用绝对工程路径和绝对日志路径，避免 UV4 因相对 `-o` 路径弹出 “Create File -o ... failed”。
-  - 当前 Keil 工程已配置 J-Link / SWD 下载，目标芯片为 `-AT32F403ARGT7`。
+当前 `tools` 目录中的构建和烧录脚本：
 
-如果 `tools/build.ps1` 不存在，则优先使用 `build-keil` skill 查找 Keil `.uvprojx` 工程并编译。
-如果 `tools/flash.ps1` 不存在，则优先使用 `flash-keil` skill；调用 `flash-keil` 时日志路径应使用绝对路径。
+- `tools/build_cmake.ps1`：CMake/Ninja 构建脚本。
+  - 推荐 Preset：`gcc-release`。
+  - 调试 Preset：`gcc-debug`。
+  - 默认 Target：`surge_backend_serial`。
+  - 工具链文件：`firmware/cmake/arm-none-eabi.cmake`。
+  - 目标定义：`firmware/cmake/at32_targets.cmake`。
+  - 链接脚本：`firmware/linker/AT32F403ARGT7.ld`。
+  - release 产物目录：`build/gcc-release/`。
+  - 主要产物：`surge_backend_serial.elf`、`surge_backend_serial.hex`、`surge_backend_serial.bin`、`surge_backend_serial.map`。
+- `tools/flash_jlink.ps1`：J-Link CLI 烧录脚本。
+  - 默认 J-Link 脚本：`tools/jlink/flash_backend_serial.jlink`。
+  - 推荐固件参数：`-Firmware build\gcc-release\surge_backend_serial.hex`。
+  - J-Link device 必须显式使用 `-AT32F403ARGT7`。
+  - 不要直接启动未指定 device 的 J-Link Commander，以免弹出 Device Selection。
+- `tools/reset_jlink.ps1`：J-Link CLI 复位脚本。
+
+常用构建和烧录命令：
+
+```powershell
+.\tools\build_cmake.ps1 -Preset gcc-release
+.\tools\flash_jlink.ps1 -Firmware build\gcc-release\surge_backend_serial.hex
+```
+
+如果 `tools/build_cmake.ps1` 不存在，则优先使用 `build-cmake` skill 查找 CMake preset 并编译。
+如果 `tools/flash_jlink.ps1` 不存在，则优先使用 `flash-jlink` skill 查找固件产物并烧录。
 
 当前硬件调试串口：
 
@@ -155,7 +167,7 @@ project/
 - 先读取完整 build log。
 - 优先修复根因，不要只掩盖错误。
 - 不要为了通过编译而删除功能代码。
-- 不要擅自修改 startup file、linker script、Keil Target、系统时钟配置。
+- 不要擅自修改 startup file、linker script、CMake target、系统时钟配置。
 
 涉及以下内容时，编译通过后还应建议硬件验证：
 
@@ -201,7 +213,7 @@ project/
 - 可以使用 lwIP、SAL、netdev 等网络组件，但以 Modbus TCP 稳定为优先目标。
 - 可以使用 DFS 或轻量文件系统，但 Flash 参数存储和事件记录布局必须先确认，不要为了引入文件系统破坏已有存储规划。
 - 标准版 RT-Thread 组件应按项目需要逐步启用，不要一次性打开大量暂时不用的组件。
-- 修改 `rtconfig.h`、Kconfig、SConscript、Keil 工程分组、组件开关时，必须说明原因和影响。
+- 修改 `rtconfig.h`、Kconfig、SConscript、CMake target、组件开关时，必须说明原因和影响。
 
 ## BSP 适配原则
 
@@ -267,8 +279,7 @@ https://github.com/LeoKemp223/embed-ai-tool
 
 优先使用以下 skill：
 
-- `build-keil`：用于 Keil 工程编译
-- `flash-keil`：用于 Keil 烧录
+- `build-cmake`：用于 CMake/GCC 工程编译
 - `flash-jlink`：用于 J-Link 烧录
 - `serial-monitor`：用于串口日志监控
 - `modbus-debug`：用于 Modbus RTU / Modbus TCP 调试
@@ -279,8 +290,8 @@ https://github.com/LeoKemp223/embed-ai-tool
 
 使用规则：
 
-- 修改代码后，优先调用 `build-keil` 编译。
-- 编译通过后，如用户要求，再调用 `flash-keil` 或 `flash-jlink` 烧录。
+- 修改代码后，优先调用 `build-cmake` 或直接执行 `tools/build_cmake.ps1 -Preset gcc-release` 编译。
+- 编译通过后，如用户要求，再调用 `flash-jlink` 或直接执行 `tools/flash_jlink.ps1` 烧录。
 - 烧录后，优先调用 `serial-monitor` 查看启动日志。
 - 修改 Modbus 相关代码后，优先调用 `modbus-debug` 做寄存器读写测试。
 - 使用 RT-Thread 后，涉及线程、message queue、mailbox、event、semaphore、mutex、栈大小的问题，可以调用 `rtos-debug`。
@@ -294,7 +305,7 @@ https://github.com/LeoKemp223/embed-ai-tool
 - startup file
 - linker script
 - system clock / PLL 配置
-- Keil Target 配置
+- CMake target 配置
 - AT32 官方固件库源码
 - RT-Thread 内核源码
 - uGUI 原始源码
